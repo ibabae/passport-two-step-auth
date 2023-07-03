@@ -3,4 +3,4 @@
 
 ## About 
 
-Laravel Two step authenticate with phone number and verification code
+Laravel Passport Two step authenticate with phone number and verification code
