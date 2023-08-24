@@ -13,49 +13,24 @@ use Illuminate\Support\Facades\Validator;
 class PublicController extends Controller
 {
     //
-    public function Register(Request $request){
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|unique:users,phone',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'messages' => $validator->errors()
-            ], 400);
-        }
-
-        $verificationCode = generateVerificationCode();
-
-        $user = User::create([
-            'phone' => $request->phone,
-            'password' => Hash::make($request->phone.'1234'),
-        ]);
-        PhoneVerification::where('phone',$request->phone)->delete();
-        PhoneVerification::create([
-            'phone' => $request->phone,
-            'verification_code' => $verificationCode,
-        ]);
-        sendVerificationCode($user->phone, $verificationCode);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Verification code has sent.'
-        ]);
-
-    }
-
     public function login(Request $request){
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|exists:users,phone',
+            'phone' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $user = User::where('phone', $request->phone)->first();
-
+        $user = User::where('phone', $request->phone)->exists();
+        if(!$user){
+            $user = User::create([
+                'phone' => $request->phone,
+                'password' => Hash::make($request->phone.'1234'),
+            ]);
+        } else {
+            $user = $user->first();
+        }
         $verificationCode = generateVerificationCode();
         $findLast = PhoneVerification::where('phone',$request->phone)->first();
         if(resend($findLast)){
